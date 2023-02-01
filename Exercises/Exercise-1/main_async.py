@@ -1,6 +1,9 @@
 import requests
 import os
 import zipfile
+import asyncio
+import aiohttp
+import aiofiles
 import time
 
 download_uris = [
@@ -35,35 +38,37 @@ def unzip_csv(zip_file_name:str):
     zip_file_name:str - name of zip file
     '''
     with zipfile.ZipFile(zip_file_name, 'r') as z:
-        z.extract(get_csv_file_name(zip_file_name))
-        print('CSV extracted successfully')
+        csv_file_name = get_csv_file_name(zip_file_name)
+        z.extract(csv_file_name)
+        print(f'CSV extracted successfully {csv_file_name}')
         z.close()
     os.remove(zip_file_name)
 
-def download_zip(uri:str) -> bool:
+async def download_zip(uri:str, session:aiohttp.ClientSession) -> None:
     ''' download zip files from uris
 
     uri:str - uri of the zip file
+    session:aiohttp.ClientSession
     '''
-    print(f'Downloading {uri}')
+
     ret = False
+    print(f'Downloading {uri}')
     try:
-        r = requests.get(uri)
-        if r.status_code == 200:
-            print(f'Valid uri, File size={len(r.content)}')
-            file_name = get_file_name_from_uri(uri)
-            with open(file_name, mode='wb') as f:
-                f.write(r.content)
-                f.close()
-            ret = True
-        else:
-            print(f'  Invalid uri, status_code={r.status_code})')
+        r = await session.get(uri)
+        r.raise_for_status()
+        print(f'Valid uri {uri}')
+        file_name = get_file_name_from_uri(uri)
+        async with aiofiles.open(file_name, mode='wb') as f:
+            await f.write(await r.content.read())
+        unzip_csv(get_file_name_from_uri(uri))
+        ret = True
     except Exception as e:
         print(f'Error: {e}')
 
-    return ret
+    # return ret
 
-def main():
+async def main():
+
     start_time = time.time()
     print(f'Start time {time.ctime(start_time)}')
 
@@ -73,13 +78,15 @@ def main():
     os.chdir('downloads')
 
     # download files from uris
-    for uri in download_uris:
-        if download_zip(uri):
-            unzip_csv(get_file_name_from_uri(uri))
+    async with aiohttp.ClientSession() as session:
+        tasks = []
+        for uri in download_uris:
+            tasks.append(download_zip(uri, session))
+        await asyncio.gather(*tasks)
 
     end_time = time.time()
     print(f'End time {time.ctime(end_time)}')
     print(f'Elapsed time {end_time - start_time:.2f} seconds')
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())

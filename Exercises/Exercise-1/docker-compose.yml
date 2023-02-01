@@ -9,4 +9,4 @@ services:
     image: "exercise-1"
     volumes:
       - .:/app
-    command: python3 main.py
+    command: python3 main_async.py
