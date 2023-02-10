@@ -1,13 +1,5 @@
 *.idea*
 *.DS_Store*
 *postgres-data*
-Exercises/Exercise-1/downloads/Divvy_Trips_2018_Q4.csv
-Exercises/Exercise-1/downloads/Divvy_Trips_2019_Q1.csv
-Exercises/Exercise-1/downloads/Divvy_Trips_2019_Q2.csv
-Exercises/Exercise-1/downloads/Divvy_Trips_2019_Q3.csv
-Exercises/Exercise-1/downloads/Divvy_Trips_2019_Q4.csv
-Exercises/Exercise-1/downloads/Divvy_Trips_2020_Q1.csv
-downloads/Divvy_Trips_2018_Q4.csv
-Exercises/Exercise-1/asynchronous-requests.py
-Exercises/Exercise-1/foundurls.txt
-Exercises/Exercise-1/urls.txt
+downloads/*
+app_teste_accessKeys.json
