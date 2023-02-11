@@ -3,6 +3,7 @@ import zipfile
 import os
 import json
 import gzip
+import io
 
 # Using AWS credentials via environment variables
 # AWS_ACCESS_KEY_ID - The access key for your AWS account.
@@ -47,15 +48,20 @@ def main():
     # Set download directorly
     set_download_dir()
 
-    # Download uris file from s3 bucket
-    gz_file_name = bucket_object_key[bucket_object_key.rindex('/')+1:len(bucket_object_key)]
-    with open(gz_file_name,'ab') as f:
-        bucket.download_file(bucket_object_key, gz_file_name)
-        f.close()
+    # # Download s3 bucket objet to a file
+    # gz_file = bucket_object_key[bucket_object_key.rindex('/')+1:len(bucket_object_key)]
+    # with open(gz_file,'ab') as f:
+    #     bucket.download_file(bucket_object_key, gz_file)
+    #     f.close()
 
+    # Download s3 object in memory
+    gz_file = io.BytesIO()
+    bucket.download_fileobj(bucket_object_key, gz_file)
+    gz_file.seek(0)
+    
     # Open gz and get uri to download
     text = ''
-    with gzip.GzipFile(gz_file_name, 'r') as z:
+    with gzip.GzipFile(gz_file, 'r') as z:
         text = z.read()
         z.close()
     uri = ((str(text, 'UTF-8')).splitlines())[0]
@@ -66,18 +72,18 @@ def main():
         bucket.download_file(uri, file_name)
         f.close()
 
-    # Open file and print lines in the stdout
-    text = ''
-    with gzip.GzipFile(file_name, 'r') as z:
-        text = z.read()
-        z.close()
+    # Open full file in memory and print lines in the stdout
+    # text = ''
+    # with gzip.GzipFile(file_name, 'r', ) as z:
+    #     text = z.read()
+    #     z.close()
+    # for line in (str(text, 'UTF-8')).splitlines():
+    #     print(line)
 
-    # lines = (str(text, 'UTF-8')).splitlines()
-    # for n in range(0, 5):
-    #     print(lines[n])
-
-    for line in (str(text, 'UTF-8')).splitlines():
-        print(line)
+    # Open file and print lines in the stdout without loading full file in memory
+    with gzip.GzipFile(file_name, 'r', ) as z:
+        for line in z:
+            print(str(line, 'UTF-8'), end='')
 
 if __name__ == '__main__':
     main()
