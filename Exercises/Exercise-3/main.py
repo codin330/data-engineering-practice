@@ -11,6 +11,7 @@ import io
 
 bucket_name = 'commoncrawl'
 bucket_object_key = 'crawl-data/CC-MAIN-2022-05/wet.paths.gz'
+in_memory_load = True
 
 def set_download_dir() -> None:
     '''Check and if necessary creates downloads dir 
@@ -48,22 +49,30 @@ def main():
     # Set download directorly
     set_download_dir()
 
-    # # Download s3 bucket objet to a file
-    # gz_file = bucket_object_key[bucket_object_key.rindex('/')+1:len(bucket_object_key)]
-    # with open(gz_file,'ab') as f:
-    #     bucket.download_file(bucket_object_key, gz_file)
-    #     f.close()
-
-    # Download s3 object in memory
-    gz_file = io.BytesIO()
-    bucket.download_fileobj(bucket_object_key, gz_file)
-    gz_file.seek(0)
-    
-    # Open gz and get uri to download
     text = ''
-    with gzip.GzipFile(gz_file, 'r') as z:
-        text = z.read()
-        z.close()
+    if not in_memory_load:
+        # Download s3 bucket objet to a file
+        gz_file = bucket_object_key[bucket_object_key.rindex('/')+1:len(bucket_object_key)]
+        with open(gz_file,'ab') as f:
+            bucket.download_file(bucket_object_key, gz_file)
+            f.close()
+
+        # Open and read gz
+        with gzip.GzipFile(gz_file, 'r') as z:
+            text = z.read()
+            z.close()
+    else:
+        # Download s3 object in memory
+        gz_file = io.BytesIO()
+        bucket.download_fileobj(bucket_object_key, gz_file)
+        gz_file.seek(0)
+    
+        # Open and read gz in memory
+        with gzip.GzipFile(fileobj = gz_file, mode='r') as z:
+            text = z.read()
+            z.close()
+
+    # Get uri to download
     uri = ((str(text, 'UTF-8')).splitlines())[0]
 
     # Download file from uri
