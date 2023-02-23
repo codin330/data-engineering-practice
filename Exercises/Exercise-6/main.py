@@ -5,7 +5,6 @@ from pyspark.sql.types import *
 from pyspark.sql.functions import col, udf, to_date, to_timestamp, substring_index, regexp_replace, second, lit
 from pyspark.sql.functions import year, month, date_add
 import os
-import glob
 from pyspark.sql.window import Window
 from pyspark.sql.functions import row_number, rank, desc
 from pyspark.sql.functions import isnull, when
